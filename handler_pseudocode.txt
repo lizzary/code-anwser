@@ -1,0 +1,22 @@
+FUNCTION handler(request, response):
+    IF request.method is not "POST":
+        RETURN response with status 405 and error message
+    
+    TRY:
+        post_id = request.body.post_id
+        author_name = request.body.author_name
+        body = request.body.body
+
+        IF post_id is empty OR author_name (trimmed) is empty OR body (trimmed) is empty:
+            RETURN response with status 400 and error message
+        
+        query = "INSERT INTO comments (post_id, author_name, body) VALUES ($1, $2, $3) RETURNING *"
+        params = [post_id, author_name.trim(), body.trim()]
+        
+        result = await database.query(query, params)
+        
+        RETURN response with status 201 and result.rows[0]
+    
+    CATCH error:
+        log.error("Create comment failed", error)
+        RETURN response with status 500 and generic error message
